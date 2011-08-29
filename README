@@ -1,0 +1,17 @@
+INSTALLATION
+------------
+
+Just change `require_once('FPDF/fpdf.php');` to the path to your copy of FPDF and start generating monthly calendars.
+
+INSTRUCTIONS
+------------
+ 
+An example can be found in demo.php/demo.pdf
+
+There really isn't anything else to this but generating a calendar based on a month and year, adding text to the dates,
+then using FPDF's Output call to render a PDF.
+
+Release Notes
+-------------
+
+v0.1 - Quick port of old code written for 'ltwCalendar'.
