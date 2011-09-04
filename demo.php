@@ -11,5 +11,6 @@ $cal->AddToDay(22, "Another Appointment Which is long and requires wrapping.");
 $cal->AddToDay(23, "Out of Order");
 $cal->AddToDay(22, ""); // spacer
 $cal->AddToDay(22, "Number three.");
+$cal->AddMoonPhases();
 $cal->Output("demo.pdf", "F");
 ?>

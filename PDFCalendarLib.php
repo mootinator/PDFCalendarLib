@@ -7,11 +7,14 @@
  * @author Kevin Stricker
  */
 require_once('FPDF/fpdf.php');
+require_once('MoonPhase.php');
 class PDFCalendarLib {
     var $pdf;
     var $daynames       = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
     var $date;
     var $days_in_month;
+    var $month;
+    var $year;
     var $positions      = array();
     var $cellWidth;
     var $fontSize;
@@ -22,6 +25,8 @@ class PDFCalendarLib {
         $ts = mktime(0,0,0,$month,1,$year);
         $this->date = getDate($ts);
         $this->days_in_month = date('t',$ts);
+        $this->month = $month;
+        $this->year = $year;
         
         $this->pdf = new FPDF($orientation,$unit,$format);
         $weekday_of_first = $this->date["wday"];
@@ -96,6 +101,16 @@ class PDFCalendarLib {
         $this->pdf->SetFont('Arial', '', $this->fontSize);
         $this->pdf->MultiCell($this->cellWidth,$this->fontHeight,$message,0,'L');
         $this->positions[$day - 1]["Y"] = $this->pdf->GetY();
+    }
+    
+    function AddMoonPhases()
+    {
+        $moon = new MoonPhase();
+        $phases = $moon->phase_changes($this->year, $this->month);
+        foreach($phases as $phase)
+        {
+            $this->AddToDay($phase['day'], $phase['phase']);
+        }
     }
     
     function Output($name, $dest)
