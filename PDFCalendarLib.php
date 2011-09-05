@@ -15,10 +15,16 @@ class PDFCalendarLib {
     var $days_in_month;
     var $month;
     var $year;
+    var $title;
     var $positions      = array();
     var $cellWidth;
     var $fontSize;
     var $fontHeight;
+    var $weekStarts     = 0;
+    var $titleFont      = 'Arial';
+    var $headerFont     = 'Arial';
+    var $numberFont     = 'Arial';
+    var $eventFont      = 'Arial';
     
     function PDFCalendarLib($month, $year, $title, $orientation='L',$unit='mm',$format='LETTER')
     {
@@ -27,20 +33,19 @@ class PDFCalendarLib {
         $this->days_in_month = date('t',$ts);
         $this->month = $month;
         $this->year = $year;
-        
+        $this->title = $title;   
         $this->pdf = new FPDF($orientation,$unit,$format);
-        $weekday_of_first = $this->date["wday"];
-        
         $this->pdf->AliasNbPages();
 	$this->pdf->AddPage();
-        
+    }
+    
+    function DrawGrid()
+    {
+        $weekday_of_first = ($this->date["wday"] + 7 - $this->weekStarts) % 7;
         $gridWidth = $this->pdf->w - $this->pdf->rMargin - $this->pdf->lMargin;
-        
         
         $this->cellWidth = $gridWidth / 7;
         $num_of_rows = ceil(($this->days_in_month + $weekday_of_first) / 7.0);
-        
-       
         $wkdayfntsz = $this->pdf->hPt /40;
         $wkdayfntht = $this->pdf->h /40 * 1.1;
         $numfntsz = $this->pdf->hPt / 60;
@@ -48,16 +53,17 @@ class PDFCalendarLib {
         $this->fontSize = $this->pdf->hPt / 80;
         $this->fontHeight = $this->pdf->h / 80 * 1.1;
         
-	$this->pdf->SetFont('Arial','B',$wkdayfntsz);
-        $this->pdf->Cell(0,$wkdayfntht,$title . ' - '. $this->date["month"] . ' ' . $this->date["year"],0,0,'C');
+	$this->pdf->SetFont($this->titleFont,'B',$wkdayfntsz);
+        $this->pdf->Cell(0,$wkdayfntht,$this->title . ' - '. $this->date["month"] . ' ' . $this->date["year"],0,0,'C');
         $this->pdf->SetY($wkdayfntht * 2 + $this->pdf->tMargin);
 	$this->pdf->SetFillColor(0,0,0);
 	$this->pdf->SetTextColor(255,255,255);
         
         
         /* Render the weekday header */
-	foreach($this->daynames as $pdf_day){
-	    $this->pdf->Cell($this->cellWidth,$wkdayfntht,$pdf_day,1,0,'C',1);
+        $this->pdf->SetFont($this->headerFont,'B',$wkdayfntsz);
+	for($i = 0; $i < 7; $i++){
+	    $this->pdf->Cell($this->cellWidth,$wkdayfntht,$this->daynames[($i + $this->weekStarts) % 7],1,0,'C',1);
 	}
 	$this->pdf->Ln();
 	$this->pdf->SetFillColor(255,255,255);
@@ -84,7 +90,7 @@ class PDFCalendarLib {
                     $x_offset =  $this->pdf->lMargin + $this->cellWidth * $j;
                     $this->pdf->SetY($y_offset);
                     $this->pdf->SetX($x_offset);
-                    $this->pdf->SetFont('Arial','B',$numfntsz);
+                    $this->pdf->SetFont($this->numberFont,'B',$numfntsz);
                     $this->pdf->Cell($this->cellWidth,$numfntht,$day,0,0,'R');
                     $this->pdf->Ln();
                     $this->positions[] = array("X" => $x_offset, "Y" => $this->pdf->GetY());
@@ -94,11 +100,13 @@ class PDFCalendarLib {
         }
     }
     
-    function AddToDay($day, $message)
+    function AddToDay($day, $message, $htmlcolor = '#000')
     {
+        list($r, $g, $b) = $this->html2rgb($htmlcolor);
+        $this->pdf->SetTextColor($r, $g, $b);
         $this->pdf->SetY($this->positions[$day - 1]["Y"]);
         $this->pdf->SetX($this->positions[$day - 1]["X"]);
-        $this->pdf->SetFont('Arial', '', $this->fontSize);
+        $this->pdf->SetFont($this->eventFont, '', $this->fontSize);
         $this->pdf->MultiCell($this->cellWidth,$this->fontHeight,$message,0,'L');
         $this->positions[$day - 1]["Y"] = $this->pdf->GetY();
     }
@@ -116,6 +124,26 @@ class PDFCalendarLib {
     function Output($name, $dest)
     {
         $this->pdf->Output($name, $dest);
+    }
+    
+    function html2rgb($color) {
+        if ($color[0] == '#')
+            $color = substr($color, 1);
+
+        if (strlen($color) == 6)
+            list($r, $g, $b) = array($color[0] . $color[1],
+                $color[2] . $color[3],
+                $color[4] . $color[5]);
+        elseif (strlen($color) == 3)
+            list($r, $g, $b) = array($color[0] . $color[0], $color[1] . $color[1], $color[2] . $color[2]);
+        else
+            return false;
+
+        $r = hexdec($r);
+        $g = hexdec($g);
+        $b = hexdec($b);
+
+        return array($r, $g, $b);
     }
 }
 
